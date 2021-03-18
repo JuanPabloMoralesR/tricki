@@ -6,51 +6,66 @@ const
     allBox = document.querySelectorAll("section span"), 
     players = document.querySelector(".players"), 
     playerXIcon = "fas fa-times", 
-    playerOIcon = "fas fa-circle";
+    playerOIcon = "fas fa-circle",
+    boardSize = 3;
 
 
 var userIsPlayingAs = "X";
 var userIcon = playerXIcon; 
 var botIcon = playerOIcon;
 var userTakenSpots = [];
+var botTakenSpots = [];
 
 
-searchForWinningCombinatios([ 1, 7, 8, 9 ]);
+const userTakenSpotsMatrix = {
+    rows: [0,0,0], 
+    columns: [0,0,0], 
+    mainDiagonal: [0,0,0], 
+    oppositeDiagonal: [0,0,0]
+}
+
+const botTakenSpotsMatrix = JSON.parse(JSON.stringify(userTakenSpotsMatrix))
+    /*
+        Posición cero = Filas 
+        Posición uno = Columnas
+        Posición dos = Diagonal principal 
+        Posición tres = Diagonal secundaria 
+    */
 
 allBox.forEach(item => {
     item.addEventListener('click', event => {
-        userTakenSpots.push(parseInt(item.className));
+        addMoveToMatrix(item.className, userTakenSpotsMatrix)
         clickedBox(item)
+        if(checkForWinningCombination(userTakenSpotsMatrix)){
+            console.log("EL usuario ha ganado");
+        }
     })
 })
 
 selectXBtn.addEventListener('click', event => {
-    selectBox.classList.add("hide")
-    playBoard.classList.add("show");
+    showPlayBoard();
 })
 
 selectOBtn.onclick = () =>{
-    selectBox.classList.add("hide")
-    playBoard.classList.add("show");
+    showPlayBoard();
     players.setAttribute("class", "players active player");
     userIsPlayingAs = "O";
     userIcon = playerOIcon; 
     botIcon = playerXIcon;
 }
 
+function showPlayBoard(){ 
+    selectBox.classList.add("hide")
+    playBoard.classList.add("show");
+}
 
 async function clickedBox(element){
     playBoard.style.pointerEvents = "none";
     addIconToSpan(element);
     userTakenSpots.sort();
-    if(userTakenSpots.length >= 3){
-        if(searchForWinningCombinatios(userTakenSpots))
-            console.log("El jugador: " + userIsPlayingAs + " Ha ganado.");
-    }
-    console.log(userTakenSpots);
     let randomDelayTime = ((Math.random() * 1000) + 200).toFixed();
     await wait(randomDelayTime)
-    bot();
+    botMove();
     playBoard.style.pointerEvents = "auto";
 }
 
@@ -60,7 +75,7 @@ async function wait(ms) {
     });
 }
 
-function bot(){ 
+function botMove(){ 
     let freeSpots = []; 
     allBox.forEach((item, index)=> {
         if(item.childElementCount == 0)
@@ -69,6 +84,11 @@ function bot(){
     let randomBox = freeSpots[Math.floor(Math.random() * freeSpots.length)];
     if(freeSpots.length > 0){
         addIconToSpan(allBox[randomBox], true);
+        addMoveToMatrix(allBox[randomBox].className, botTakenSpotsMatrix);
+    }
+
+    if(checkForWinningCombination(botTakenSpotsMatrix)){
+        console.log("El bot ganó la partida!");
     }
 }
 
@@ -84,38 +104,30 @@ function addIconToSpan(element, isBot = false){
     element.style.pointerEvents = "none"; // Una vez que el usuario seleccione un casilla no puede ser selecionada de nuevo
 }
 
-function searchForWinningCombinatios(array){ 
-    if(array.length === 3){
-        return isWinningCombination(array);
+function checkForWinningCombination(takenSpots){
+    const {rows, columns, mainDiagonal, oppositeDiagonal} = takenSpots;
+    const checkSum = (element) => element === boardSize;
+    const sumOfArrElements = (a,b) => a + b;
+
+    return rows.some(checkSum) || columns.some(checkSum) || mainDiagonal.reduce(sumOfArrElements,0) === boardSize 
+        || oppositeDiagonal.reduce(sumOfArrElements,0) === boardSize;
+}
+
+function addMoveToMatrix(spotInMatrix, matrix){
+    let spotInfo = (spotInMatrix).split("-")
+    let row = parseInt(spotInfo[0])
+    let column = parseInt(spotInfo[1])
+    
+    matrix.rows[row]++;
+    matrix.columns[column]++;
+    
+    if(row === column){
+        matrix.mainDiagonal[column]++;
     }
 
-    for (let index = 0; index < 4; index++) {
-        let tempArray = [...array] // En js, los arreglos son valores de referencia, por lo cual si se usa =, ambas variables estarán apuntando al mismo objeto
-        tempArray.splice(index, 1);
-        if(isWinningCombination(tempArray)){ 
-            return true;
-        }
+    if((row + column + 1) === boardSize){
+        matrix.oppositeDiagonal[row]++;
     }
-
-    return false;
 }
 
-function isWinningCombination(spots){
-    return consecutive(spots) || consecutive(spots, 3) || consecutive(spots, 4) || isDiagonal(spots);
-}
 
-function consecutive(array, difference = 1) {
-    var i = 2, d;
-    while (i < array.length) {
-        d = (array[i - 1]) - array[i - 2];
-        if (Math.abs(d) === difference && d === array[i] - array[i - 1]) {
-            return true;
-        }
-        i++;
-    }
-    return false;
-}
-
-function isDiagonal(array){ 
-    return array.reduce((a,b) => a + b, 0) == 15;
-}
