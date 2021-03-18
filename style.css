@@ -167,43 +167,48 @@ body{
     line-height: 80px;
     color: #56baed;
 }
-
 .result-box{
-    background: white; 
-    padding: 20px;
+    padding: 25px 20px;
     border-radius: 5px;
-    max-width: 350px;
+    max-width: 400px;
     width: 100%;
-    display: none;
-}
-
-.result-box .won-text{ 
-    font-size: 25px;
+    opacity: 0;
+    text-align: center;
+    background: #fff;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  .result-box.show{
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .result-box .won-text{
+    font-size: 30px;
     font-weight: 500;
     display: flex;
     justify-content: center;
-}
-
-.result-box .won-text p{
+  }
+  .result-box .won-text p{
     font-weight: 600;
     margin: 0 5px;
-}
-
-.result-box .btn{
+  }
+  .result-box .btn{
+    width: 100%;
+    margin-top: 25px;
     display: flex;
-    margin-top: 20px;
     justify-content: center;
-}
-
-.result-box .btn button{
+  }
+  .btn button{
     font-size: 18px;
-    font-weight: 500; 
+    font-weight: 500;
     padding: 8px 20px;
     border: none;
-    outline: none;
     background: #56baed;
     border-radius: 5px;
     color: #fff;
+    outline: none;
     cursor: pointer;
-    transition: all 0.3 ease;
-}
+    transition: all 0.3s ease;
+  }
+  

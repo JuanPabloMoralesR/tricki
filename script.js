@@ -5,6 +5,9 @@ const
     playBoard = document.querySelector(".play-board"),
     allBox = document.querySelectorAll("section span"), 
     players = document.querySelector(".players"), 
+    resultBox = document.querySelector(".result-box"),
+    wonText = resultBox.querySelector(".won-text"),
+    replayButton = resultBox.querySelector(".replay-button"),
     playerXIcon = "fas fa-times", 
     playerOIcon = "fas fa-circle",
     boardSize = 3;
@@ -13,9 +16,7 @@ const
 var userIsPlayingAs = "X";
 var userIcon = playerXIcon; 
 var botIcon = playerOIcon;
-var userTakenSpots = [];
-var botTakenSpots = [];
-
+var gameIsOver = false;
 
 const userTakenSpotsMatrix = {
     rows: [0,0,0], 
@@ -37,7 +38,11 @@ allBox.forEach(item => {
         addMoveToMatrix(item.className, userTakenSpotsMatrix)
         clickedBox(item)
         if(checkForWinningCombination(userTakenSpotsMatrix)){
-            console.log("EL usuario ha ganado");
+            showWinner();
+        }
+        let freeSpots = getFreeSpots(); 
+        if(freeSpots.length === 0 && !checkForWinningCombination(userTakenSpotsMatrix)){
+            showWinner(false, true);
         }
     })
 })
@@ -54,6 +59,10 @@ selectOBtn.onclick = () =>{
     botIcon = playerXIcon;
 }
 
+replayButton.onclick = () => {
+    window.location.reload();
+}
+
 function showPlayBoard(){ 
     selectBox.classList.add("hide")
     playBoard.classList.add("show");
@@ -62,7 +71,6 @@ function showPlayBoard(){
 async function clickedBox(element){
     playBoard.style.pointerEvents = "none";
     addIconToSpan(element);
-    userTakenSpots.sort();
     let randomDelayTime = ((Math.random() * 1000) + 200).toFixed();
     await wait(randomDelayTime)
     botMove();
@@ -76,20 +84,27 @@ async function wait(ms) {
 }
 
 function botMove(){ 
+    let freeSpots = getFreeSpots(); 
+    if(!gameIsOver){
+        let randomBox = freeSpots[Math.floor(Math.random() * freeSpots.length)];
+        if(freeSpots.length > 0){
+            addIconToSpan(allBox[randomBox], true);
+            addMoveToMatrix(allBox[randomBox].className, botTakenSpotsMatrix);
+        }
+        if(checkForWinningCombination(botTakenSpotsMatrix)){
+            showWinner(true);
+        }
+    }
+}
+
+function getFreeSpots(){
     let freeSpots = []; 
     allBox.forEach((item, index)=> {
         if(item.childElementCount == 0)
             freeSpots.push(index);
     })
-    let randomBox = freeSpots[Math.floor(Math.random() * freeSpots.length)];
-    if(freeSpots.length > 0){
-        addIconToSpan(allBox[randomBox], true);
-        addMoveToMatrix(allBox[randomBox].className, botTakenSpotsMatrix);
-    }
 
-    if(checkForWinningCombination(botTakenSpotsMatrix)){
-        console.log("El bot ganó la partida!");
-    }
+    return freeSpots;
 }
 
 function addIconToSpan(element, isBot = false){
@@ -108,7 +123,6 @@ function checkForWinningCombination(takenSpots){
     const {rows, columns, mainDiagonal, oppositeDiagonal} = takenSpots;
     const checkSum = (element) => element === boardSize;
     const sumOfArrElements = (a,b) => a + b;
-
     return rows.some(checkSum) || columns.some(checkSum) || mainDiagonal.reduce(sumOfArrElements,0) === boardSize 
         || oppositeDiagonal.reduce(sumOfArrElements,0) === boardSize;
 }
@@ -128,6 +142,25 @@ function addMoveToMatrix(spotInMatrix, matrix){
     if((row + column + 1) === boardSize){
         matrix.oppositeDiagonal[row]++;
     }
+}
+
+function showWinner(botWon = false, draw = false){
+    let text = 'Has ganado la partida!'
+    setTimeout(()=>{ //after match won by someone then hide the playboard and show the result box after 700ms
+        resultBox.classList.add("show");
+        playBoard.classList.remove("show");
+    }, 400);
+
+    if(botWon){
+        text = 'El contrincante ha ganado la partida :c'
+    }
+
+    if(draw){
+        text = 'Empate!'
+    }
+
+    wonText.innerHTML = text
+    gameIsOver = !gameIsOver
 }
 
 
